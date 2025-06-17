@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Brand List</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .actions a { margin-right: 10px; text-decoration: none; }
+        .add-link { display: inline-block; margin-bottom: 20px; padding: 10px 15px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
+        .messages { list-style: none; padding: 0; margin-bottom: 20px; }
+        .messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 4px; }
+        .messages li.success { background-color: #d4edda; color: #155724; }
+        .nav-link { display: inline-block; margin-top:20px; text-decoration: none; color: #007bff; font-size: 0.95em;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <h1>Brand List</h1>
+        <a href="{% url 'service_manager:brand_add' %}" class="add-link">Add New Brand</a>
+        {% if brands %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for brand in brands %}
+                    <tr>
+                        <td>{{ brand.name }}</td>
+                        <td class="actions">
+                            <a href="{% url 'service_manager:brand_edit' brand_id=brand.id %}">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No brands found. <a href="{% url 'service_manager:brand_add' %}">Add one now?</a></p>
+        {% endif %}
+        <a href="{% url 'service_manager:config_dashboard' %}" class="nav-link">Back to Configuration Dashboard</a>
+    </div>
+</body>
+</html>

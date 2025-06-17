@@ -10,7 +10,10 @@ urlpatterns = [
     # Case Workflow URLs
     path('workplace/cases/register/', views.case_registration, name='case_registration'),
     path('workplace/cases/<str:case_no>/', views.case_detail, name='case_detail'), # View details of a specific case
-    path('workplace/cases/<str:case_no>/receive/', views.case_receive, name='case_receive'),
+
+    # New URL for confirming receipt, replacing the old placeholder
+    path('workplace/cases/<str:case_no>/confirm_receiving/', views.case_confirm_receiving, name='case_confirm_receiving'),
+
     path('workplace/cases/<str:case_no>/quote/', views.case_quotation, name='case_quotation'),
     path('workplace/cases/<str:case_no>/repair/', views.case_repair, name='case_repair'),
     path('workplace/cases/<str:case_no>/qc/', views.case_qc, name='case_qc'),
@@ -36,6 +39,11 @@ urlpatterns = [
     path('config/equipment_models/', views.equipment_model_list, name='equipment_model_list'),
     path('config/equipment_models/add/', views.equipment_model_add, name='equipment_model_add'),
     path('config/equipment_models/<int:model_id>/edit/', views.equipment_model_edit, name='equipment_model_edit'),
+
+    # Equipment Instance Setup
+    path('config/equipment_instances/', views.equipment_instance_list, name='equipment_instance_list'),
+    path('config/equipment_instances/add/', views.equipment_instance_add, name='equipment_instance_add'),
+    path('config/equipment_instances/<int:instance_id>/edit/', views.equipment_instance_edit, name='equipment_instance_edit'),
 
     # Spare Part Setup
     path('config/spare_parts/', views.spare_part_list, name='spare_part_list'),

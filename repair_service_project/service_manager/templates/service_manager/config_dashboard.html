@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head><title>Configuration Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        .nav-links a { display: block; margin: 10px 0; padding: 10px; background-color: #e9ecef; text-decoration: none; color: #0056b3; border-radius: 4px; }
+        .nav-links a:hover { background-color: #dde2e6; }
+        .back-to-workplace a { display: inline-block; margin-top: 20px; color: #007bff; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Configuration Dashboard</h1>
+        <nav class="nav-links">
+            <a href="{% url 'service_manager:client_list' %}">Manage Clients</a>
+            <a href="{% url 'service_manager:brand_list' %}">Manage Brands</a>
+            <a href="{% url 'service_manager:equipment_model_list' %}">Manage Equipment Models</a>
+            <a href="{% url 'service_manager:equipment_instance_list' %}">Manage Equipment Instances</a> {# New Link #}
+        </nav>
+        <div class="back-to-workplace"><a href="{% url 'service_manager:workplace_dashboard' %}">Back to Workplace Dashboard</a></div>
+    </div>
+</body>
+</html>

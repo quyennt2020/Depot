@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Workplace Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding:0; background-color: #f8f9fa; color: #343a40; }
+        .container { width: 90%; max-width:1200px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.075); }
+        h1, h2 { text-align: center; color: #007bff; margin-bottom:25px; }
+        table { width: 100%; margin: 20px 0; border-collapse: collapse; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        th, td { border: 1px solid #dee2e6; padding: 12px 15px; text-align: left; font-size:0.95em; }
+        th { background-color: #e9ecef; font-weight: bold; color: #495057; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f1f1f1; }
+        .actions a { margin-right: 10px; text-decoration: none; color: #007bff; }
+        .actions a:hover { text-decoration: underline; color: #0056b3; }
+        .add-case-link {
+            display: inline-block; padding: 10px 15px; margin-bottom: 25px; font-size: 1.1em; color: #fff;
+            background-color: #28a745; text-decoration:none; border-radius:5px; text-align:center;
+            transition: background-color 0.3s ease;
+        }
+        .add-case-link:hover { background-color: #218838; }
+        .no-cases { text-align:center; font-size: 1.1em; color: #6c757d; margin-top:30px; }
+        .header-actions { text-align:center; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Workplace Dashboard</h1>
+        <div class="header-actions">
+                 <a href="{% url 'service_manager:case_registration' %}" class="add-case-link" style="background-color: #28a745;">Register New Case</a>
+                 <a href="{% url 'service_manager:queue_new_registration' %}" class="nav-link" style="background-color: #17a2b8; color:white; margin-left:10px;">
+                    View New Registrations Queue ({{ new_registration_cases_count|default:0 }})
+                 </a>
+        </div>
+        <h2>Recent Cases</h2>
+        {% if cases %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Case No</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th>Registered On</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for case in cases %}
+                    <tr>
+                        <td>{{ case.case_no }}</td>
+                        <td>{{ case.client.name|default:"N/A" }}</td> {# Added default filter #}
+                        <td>{{ case.get_status_display }}</td>
+                        <td>{{ case.registration_date|date:"Y-m-d H:i" }}</td>
+                        <td class="actions">
+                                <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}">View Details</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="no-cases">No cases found.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
