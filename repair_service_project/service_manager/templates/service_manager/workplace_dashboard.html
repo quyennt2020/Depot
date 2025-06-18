@@ -6,6 +6,38 @@
         body { font-family: sans-serif; margin: 0; padding:0; background-color: #f8f9fa; color: #343a40; }
         .container { width: 90%; max-width:1200px; margin: 30px auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.075); }
         h1, h2 { text-align: center; color: #007bff; margin-bottom:25px; }
+        /* Styling for new stats section */
+        .stats-overview {
+            display: flex;
+            justify-content: space-around; /* Distribute space */
+            flex-wrap: wrap; /* Wrap if not enough space */
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .stat-card {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin: 10px;
+            min-width: 180px; /* Minimum width for each card */
+        }
+        .stat-card h3 {
+            font-size: 1.2em;
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 5px;
+        }
+        .stat-card p {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #343a40;
+            margin: 0;
+        }
+        /* Existing styles for table, links etc. should be preserved */
         table { width: 100%; margin: 20px 0; border-collapse: collapse; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         th, td { border: 1px solid #dee2e6; padding: 12px 15px; text-align: left; font-size:0.95em; }
         th { background-color: #e9ecef; font-weight: bold; color: #495057; }
@@ -13,38 +45,68 @@
         tr:hover { background-color: #f1f1f1; }
         .actions a { margin-right: 10px; text-decoration: none; color: #007bff; }
         .actions a:hover { text-decoration: underline; color: #0056b3; }
-        .add-case-link {
-            display: inline-block; padding: 10px 15px; margin-bottom: 25px; font-size: 1.1em; color: #fff;
-            background-color: #28a745; text-decoration:none; border-radius:5px; text-align:center;
+        .nav-link, .add-case-link {
+            display: inline-block; padding: 8px 12px; /* Adjusted padding slightly */
+            margin-bottom: 10px; /* Adjusted margin */
+            margin-right: 10px; /* Added margin for spacing */
+            font-size: 1em; /* Adjusted font size */
+            color: #fff;
+            text-decoration:none; border-radius:5px; text-align:center;
             transition: background-color 0.3s ease;
         }
+        .add-case-link { background-color: #28a745; }
         .add-case-link:hover { background-color: #218838; }
+        .nav-link.new-reg { background-color: #17a2b8; }
+        .nav-link.repair-q { background-color: #ffc107; color:black; }
+        .nav-link.qc-q { background-color: #6f42c1; }
+        .nav-link.delivery-q { background-color: #fd7e14; }
+        .nav-link:hover { opacity:0.85; }
+
         .no-cases { text-align:center; font-size: 1.1em; color: #6c757d; margin-top:30px; }
-        .header-actions { text-align:center; margin-bottom: 20px; }
+        .header-actions { text-align:center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom:20px;}
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Workplace Dashboard</h1>
+
         <div class="header-actions">
-                 {% if perms.service_manager.add_case %}
-                 <a href="{% url 'service_manager:case_registration' %}" class="add-case-link" style="background-color: #28a745;">Register New Case</a>
-                 {% endif %}
-                 <a href="{% url 'service_manager:queue_new_registration' %}" class="nav-link" style="background-color: #17a2b8; color:white; margin-left:10px;">
-                    View New Registrations Queue ({{ new_registration_cases_count|default:0 }})
-                 </a>
-                 <a href="{% url 'service_manager:repair_queue' %}" class="nav-link" style="background-color: #ffc107; color:black; margin-left:10px;">
-                    View Repair Queue ({{ repair_queue_count|default:0 }})
-                 </a>
-                 <a href="{% url 'service_manager:qc_queue' %}" class="nav-link" style="background-color: #6f42c1; color:white; margin-left:10px;">
-                    View QC Queue ({{ qc_queue_count|default:0 }})
-                 </a>
-                 <a href="{% url 'service_manager:delivery_queue' %}" class="nav-link" style="background-color: #fd7e14; color:white; margin-left:10px;">
-                    View Delivery Queue ({{ delivery_queue_count|default:0 }})
-                 </a>
+            {% if perms.service_manager.add_case %}
+                <a href="{% url 'service_manager:case_registration' %}" class="add-case-link">Register New Case</a>
+            {% endif %}
+            <a href="{% url 'service_manager:queue_new_registration' %}" class="nav-link new-reg">
+                New Registrations ({{ new_registration_cases_count|default:0 }})
+            </a>
+            <a href="{% url 'service_manager:repair_queue' %}" class="nav-link repair-q">
+                Repair Queue ({{ repair_queue_count|default:0 }})
+            </a>
+            <a href="{% url 'service_manager:qc_queue' %}" class="nav-link qc-q">
+                QC Queue ({{ qc_queue_count|default:0 }})
+            </a>
+            <a href="{% url 'service_manager:delivery_queue' %}" class="nav-link delivery-q">
+                Delivery Queue ({{ delivery_queue_count|default:0 }})
+            </a>
         </div>
+
+        <!-- New Stats Overview Section -->
+        <div class="stats-overview">
+            <div class="stat-card">
+                <h3>Total Open Cases</h3>
+                <p>{{ total_open_cases_count|default:"0" }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>New Cases Today</h3>
+                <p>{{ new_cases_today_count|default:"0" }}</p>
+            </div>
+            <div class="stat-card">
+                <h3>Cases Requiring Action</h3>
+                <p>{{ pending_action_count|default:"0" }}</p>
+            </div>
+        </div>
+        <!-- End New Stats Overview Section -->
+
         <h2>Recent Cases</h2>
-        {% if cases %}
+        {% if recent_cases %}
             <table>
                 <thead>
                     <tr>
@@ -56,21 +118,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for case in cases %}
+                    {% for case in recent_cases %}
                     <tr>
                         <td>{{ case.case_no }}</td>
-                        <td>{{ case.client.name|default:"N/A" }}</td> {# Added default filter #}
+                        <td>{{ case.client.name|default:"N/A" }}</td>
                         <td>{{ case.get_status_display }}</td>
                         <td>{{ case.registration_date|date:"Y-m-d H:i" }}</td>
                         <td class="actions">
-                                <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}">View Details</a>
+                            {# The case_list.html template handles conditional links now, this is a direct link to detail #}
+                            <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}">View Details</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% else %}
-            <p class="no-cases">No cases found.</p>
+            <p class="no-cases">No recent cases found.</p>
         {% endif %}
     </div>
 </body>

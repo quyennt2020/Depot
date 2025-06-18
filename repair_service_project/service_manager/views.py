@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse # Keep for other placeholders
 from django.urls import reverse
 from django.utils import timezone
-from datetime import timedelta # Added timedelta
+from datetime import timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
@@ -10,60 +10,44 @@ from django.db.models import Q
 from .forms import (
     CaseRegistrationForm, ClientForm, BrandForm, EquipmentModelForm, EquipmentInstanceForm,
     QuotationForm, QuotationLineItemFormSet, CaseSparePartUsageFormSet, SparePartForm,
-    RegionForm, MalfunctionTypeForm, SupplierForm, StorageLocationForm # Added StorageLocationForm
+    RegionForm, MalfunctionTypeForm, SupplierForm, StorageLocationForm
 )
 from .models import (
     Case, Client, EquipmentInstance, CaseItem, EquipmentModel, Region, Brand,
     Quotation, QuotationLineItem, SparePart, CaseStatus, CaseSparePartUsage,
-    MalfunctionType, Supplier, StorageLocation # Added StorageLocation
+    MalfunctionType, Supplier, StorageLocation
 )
 
 # --- Workplace Views ---
 @login_required
 @permission_required('service_manager.view_case', raise_exception=True)
 def workplace_dashboard(request):
-    # Existing: Recent cases list
     recent_cases = Case.objects.all().order_by('-registration_date')[:10]
-
-    # Statistics Calculation
     new_registration_cases_count = Case.objects.filter(status=CaseStatus.NEW).count()
-
-    total_open_cases = Case.objects.exclude(
+    total_open_cases_count = Case.objects.exclude(
         Q(status=CaseStatus.CLOSED) | Q(status=CaseStatus.QUOTATION_REJECTED)
     ).count()
-
-    awaiting_quotation_count = Case.objects.filter(status=CaseStatus.AWAITING_QUOTATION).count()
-    pending_quotation_approval_count = Case.objects.filter(status=CaseStatus.QUOTATION_SUBMITTED).count()
-    ready_for_repair_count = Case.objects.filter(status=CaseStatus.QUOTATION_APPROVED).count()
-    repair_in_progress_count = Case.objects.filter(status=CaseStatus.REPAIR_IN_PROGRESS).count()
-
+    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    new_cases_today_count = Case.objects.filter(registration_date__gte=today_start).count()
+    actionable_statuses = [
+        CaseStatus.AWAITING_QUOTATION, CaseStatus.QUOTATION_APPROVED,
+        CaseStatus.REPAIR_COMPLETED, CaseStatus.QC_PASSED,
+    ]
+    pending_action_count = Case.objects.filter(status__in=actionable_statuses).count()
+    repair_queue_link_count = Case.objects.filter(
+        Q(status=CaseStatus.QUOTATION_APPROVED) | Q(status=CaseStatus.REPAIR_IN_PROGRESS)
+    ).count()
     qc_queue_count = Case.objects.filter(status=CaseStatus.REPAIR_COMPLETED).count()
     delivery_queue_count = Case.objects.filter(status=CaseStatus.QC_PASSED).count()
-
-    seven_days_ago = timezone.now() - timedelta(days=7)
-    recently_closed_cases_count = Case.objects.filter(
-        status=CaseStatus.CLOSED,
-        closed_date__gte=seven_days_ago
-    ).count()
-
-    repair_queue_link_count = ready_for_repair_count + repair_in_progress_count
-
     context = {
         'recent_cases': recent_cases,
-
         'new_registration_cases_count': new_registration_cases_count,
         'repair_queue_count': repair_queue_link_count,
         'qc_queue_count': qc_queue_count,
         'delivery_queue_count': delivery_queue_count,
-
-        'total_open_cases': total_open_cases,
-        'stat_awaiting_quotation': awaiting_quotation_count,
-        'stat_pending_quotation_approval': pending_quotation_approval_count,
-        'stat_ready_for_repair': ready_for_repair_count,
-        'stat_repair_in_progress': repair_in_progress_count,
-        'stat_pending_qc': qc_queue_count,
-        'stat_pending_delivery': delivery_queue_count,
-        'stat_recently_closed': recently_closed_cases_count,
+        'total_open_cases_count': total_open_cases_count,
+        'new_cases_today_count': new_cases_today_count,
+        'pending_action_count': pending_action_count,
     }
     return render(request, 'service_manager/workplace_dashboard.html', context)
 
@@ -584,11 +568,47 @@ def supplier_edit(request, sup_id):
     })
 
 @login_required
-def storage_location_list(request): return HttpResponse("Storage Location List") # Placeholder
+@permission_required('service_manager.view_storagelocation', raise_exception=True)
+def storage_location_list(request):
+    storage_locations = StorageLocation.objects.all().order_by('name')
+    return render(request, 'service_manager/storage_location_list.html', {'storage_locations': storage_locations})
+
 @login_required
-def storage_location_add(request): return HttpResponse("Add New Storage Location Form") # Placeholder
+@permission_required('service_manager.add_storagelocation', raise_exception=True)
+def storage_location_add(request):
+    if request.method == 'POST':
+        form = StorageLocationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Storage Location '{form.cleaned_data['name']}' added successfully.")
+            return redirect('service_manager:storage_location_list')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = StorageLocationForm()
+    return render(request, 'service_manager/storage_location_form.html', {
+        'form': form,
+        'form_title': 'Add New Storage Location'
+    })
+
 @login_required
-def storage_location_edit(request, loc_id): return HttpResponse(f"Edit Storage Location {loc_id}") # Placeholder
+@permission_required('service_manager.change_storagelocation', raise_exception=True)
+def storage_location_edit(request, loc_id):
+    storage_location_instance = get_object_or_404(StorageLocation, id=loc_id)
+    if request.method == 'POST':
+        form = StorageLocationForm(request.POST, instance=storage_location_instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Storage Location '{form.cleaned_data['name']}' updated successfully.")
+            return redirect('service_manager:storage_location_list')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = StorageLocationForm(instance=storage_location_instance)
+    return render(request, 'service_manager/storage_location_form.html', {
+        'form': form,
+        'form_title': f"Edit Storage Location: {storage_location_instance.name}"
+    })
 
 # --- Other Placeholder views ---
 @login_required
@@ -613,5 +633,7 @@ def user_list(request): return HttpResponse("User List")
 @login_required
 def user_add(request): return HttpResponse("Add New User/SalesPerson Form")
 
+
+[end of repair_service_project/service_manager/views.py]
 
 [end of repair_service_project/service_manager/views.py]
