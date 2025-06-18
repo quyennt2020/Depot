@@ -14,10 +14,34 @@
     <div class="container">
         <h1>Configuration Dashboard</h1>
         <nav class="nav-links">
+            {% if perms.service_manager.view_client %}
             <a href="{% url 'service_manager:client_list' %}">Manage Clients</a>
+            {% endif %}
+            {% if perms.service_manager.view_brand %}
             <a href="{% url 'service_manager:brand_list' %}">Manage Brands</a>
+            {% endif %}
+            {% if perms.service_manager.view_equipmentmodel %}
             <a href="{% url 'service_manager:equipment_model_list' %}">Manage Equipment Models</a>
-            <a href="{% url 'service_manager:equipment_instance_list' %}">Manage Equipment Instances</a> {# New Link #}
+            {% endif %}
+            {% if perms.service_manager.view_equipmentinstance %}
+            <a href="{% url 'service_manager:equipment_instance_list' %}">Manage Equipment Instances</a>
+            {% endif %}
+            {% if perms.service_manager.view_sparepart %}
+            <a href="{% url 'service_manager:spare_part_list' %}">Manage Spare Parts</a>
+            {% endif %}
+            {% if perms.service_manager.view_region %}
+            <a href="{% url 'service_manager:region_list' %}">Manage Regions</a>
+            {% endif %}
+            {% if perms.service_manager.view_malfunctiontype %}
+            <a href="{% url 'service_manager:malfunction_type_list' %}">Manage Malfunction Types</a>
+            {% endif %}
+            {% if perms.service_manager.view_supplier %}
+            <a href="{% url 'service_manager:supplier_list' %}">Manage Suppliers</a>
+            {% endif %}
+            {% if perms.service_manager.view_storagelocation %}
+            <a href="{% url 'service_manager:storage_location_list' %}">Manage Storage Locations</a>
+            {% endif %}
+            {# Links to other config sections will be added here later #}
         </nav>
         <div class="back-to-workplace"><a href="{% url 'service_manager:workplace_dashboard' %}">Back to Workplace Dashboard</a></div>
     </div>

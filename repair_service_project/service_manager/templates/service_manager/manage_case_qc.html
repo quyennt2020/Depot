@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage QC for Case: {{ case.case_no }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        h2 { border-top: 1px solid #eee; padding-top:15px; margin-top:25px; }
+        .case-info dt { font-weight: bold; color: #555; }
+        .case-info dd { margin-left: 0; margin-bottom: 8px; }
+        .item-list { margin-left: 20px; padding-left: 0; list-style: none;}
+        .item-list li { margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 4px; background-color: #fcfcfc;}
+        .item-list li strong { color: #337ab7; }
+        textarea[name="qc_notes"] { width: 100%; min-height: 100px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; margin-bottom:15px;}
+        .actions button {
+            padding: 10px 15px; color: white; border: none;
+            border-radius: 4px; cursor: pointer; margin-right:10px; margin-top:10px; font-size: 1em;
+        }
+        .actions button.qc-pass { background-color: #28a745; }
+        .actions button.qc-fail { background-color: #dc3545; }
+        .messages { list-style: none; padding: 0; margin-bottom: 20px; }
+        .messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 4px; }
+        .messages li.success { background-color: #d4edda; color: #155724; }
+        .messages li.warning { background-color: #fff3cd; color: #856404; }
+        .messages li.error { background-color: #f8d7da; color: #721c24; }
+        .nav-link { display: inline-block; margin-top:20px; text-decoration: none; color: #007bff; font-size: 0.95em;}
+        .form-field { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <h1>Manage Quality Control: Case {{ case.case_no }}</h1>
+
+        <div class="case-info">
+            <dl>
+                <dt>Client:</dt><dd>{{ case.client.name }}</dd>
+                <dt>Current Status:</dt><dd>{{ case.get_status_display }}</dd>
+                <dt>Registered:</dt><dd>{{ case.registration_date|date:"Y-m-d H:i" }}</dd>
+                {% if case.quotation %}
+                    <dt>Quotation No:</dt><dd><a href="{% url 'service_manager:view_quotation' quotation_id=case.quotation.id %}">{{ case.quotation.quotation_no }}</a> ({{ case.quotation.get_status_display }})</dd>
+                {% endif %}
+                {% if case.repair_start_date %}
+                    <dt>Repair Started:</dt><dd>{{ case.repair_start_date|date:"Y-m-d H:i" }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+
+        <h2>Equipment Items & Malfunctions</h2>
+        <ul class="item-list">
+            {% for item in case.items.all %}
+                <li>
+                    <strong>{{ item.equipment_instance.serial_no }} ({{ item.equipment_instance.model.name }})</strong>:
+                    {{ item.malfunction_description }}
+                    {% if item.notes %} <br><em>Repair Notes for item: {{ item.notes|linebreaksbr }}</em> {% endif %}
+                </li>
+            {% empty %}
+                <li>No equipment items for this case.</li>
+            {% endfor %}
+        </ul>
+
+        {% if case.repair_notes %} {# Placeholder: Assuming a general repair_notes field on Case might exist #}
+        <h2>Overall Repair Notes from Technician</h2>
+        <p>{{ case.repair_notes|linebreaksbr }}</p>
+        {% endif %}
+
+        <h2>QC Assessment</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-field">
+                <label for="id_qc_notes">QC Notes (Provide details, especially if failing):</label>
+                <textarea name="qc_notes" id="id_qc_notes">{% if case.qc_notes %}{{ case.qc_notes }}{% elif request.POST.qc_notes %}{{ request.POST.qc_notes }}{% endif %}</textarea>
+                {# Pre-fill with existing case.qc_notes or POSTed data on error #}
+            </div>
+
+            <div class="actions">
+                {% if case.status == 'REPAIR_COMPLETED' %}
+                    <button type="submit" name="qc_action" value="passed" class="qc-pass">Mark QC Passed</button>
+                    <button type="submit" name="qc_action" value="failed" class="qc-fail">Mark QC Failed</button>
+                {% else %}
+                    <p>This case is not currently awaiting QC. Current status: <strong>{{ case.get_status_display }}</strong></p>
+                {% endif %}
+            </div>
+        </form>
+
+        <a href="{% url 'service_manager:qc_queue' %}" class="nav-link">Back to QC Queue</a> <br>
+        <a href="{% url 'service_manager:workplace_dashboard' %}" class="nav-link">Back to Workplace Dashboard</a>
+    </div>
+</body>
+</html>

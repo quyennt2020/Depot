@@ -27,9 +27,20 @@
     <div class="container">
         <h1>Workplace Dashboard</h1>
         <div class="header-actions">
+                 {% if perms.service_manager.add_case %}
                  <a href="{% url 'service_manager:case_registration' %}" class="add-case-link" style="background-color: #28a745;">Register New Case</a>
+                 {% endif %}
                  <a href="{% url 'service_manager:queue_new_registration' %}" class="nav-link" style="background-color: #17a2b8; color:white; margin-left:10px;">
                     View New Registrations Queue ({{ new_registration_cases_count|default:0 }})
+                 </a>
+                 <a href="{% url 'service_manager:repair_queue' %}" class="nav-link" style="background-color: #ffc107; color:black; margin-left:10px;">
+                    View Repair Queue ({{ repair_queue_count|default:0 }})
+                 </a>
+                 <a href="{% url 'service_manager:qc_queue' %}" class="nav-link" style="background-color: #6f42c1; color:white; margin-left:10px;">
+                    View QC Queue ({{ qc_queue_count|default:0 }})
+                 </a>
+                 <a href="{% url 'service_manager:delivery_queue' %}" class="nav-link" style="background-color: #fd7e14; color:white; margin-left:10px;">
+                    View Delivery Queue ({{ delivery_queue_count|default:0 }})
                  </a>
         </div>
         <h2>Recent Cases</h2>

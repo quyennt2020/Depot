@@ -48,7 +48,15 @@
                         <td>{{ case.get_status_display }}</td>
                         <td>{{ case.registration_date|date:"Y-m-d H:i" }}</td>
                         <td class="actions">
-                            <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}">View Details</a>
+                            {% if list_title == 'Repair Queue' or status_filter == 'RepairPhase' %}
+                                <a href="{% url 'service_manager:manage_case_repair' case_no=case.case_no %}">Manage Repair</a>
+                            {% elif list_title == 'QC Queue (Pending QC)' or status_filter == 'QCPhase' %}
+                                <a href="{% url 'service_manager:manage_case_qc' case_no=case.case_no %}">Manage QC</a>
+                            {% elif list_title == 'Delivery Queue (Pending Delivery)' or status_filter == 'DeliveryPhase' %}
+                                <a href="{% url 'service_manager:manage_case_delivery' case_no=case.case_no %}">Manage Delivery</a>
+                            {% else %}
+                                <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}">View Details</a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

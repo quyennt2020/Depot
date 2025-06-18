@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Close Case: {{ case.case_no }}</title>
+    <style>/* Basic styling consistent with other form views */
+        body{font-family:sans-serif;margin:20px;background-color:#f9f9f9}
+        .container{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 0 15px rgba(0,0,0,.1)}
+        h1{color:#0056b3}.case-info dt{font-weight:700;color:#555}.case-info dd{margin-left:0;margin-bottom:8px}
+        textarea[name="closing_notes"]{width:100%;min-height:100px;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;margin-bottom:15px}
+        .actions button{padding:10px 15px;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-top:10px;font-size:1em}
+        .actions button.confirm-close{background-color:#17a2b8} /* Info blue for closing */
+        .messages{list-style:none;padding:0;margin-bottom:20px}.messages li{padding:10px 15px;margin-bottom:10px;border-radius:4px}
+        .messages li.success{background-color:#d4edda;color:#155724}
+        .nav-link{display:inline-block;margin-top:20px;text-decoration:none;color:#007bff;font-size:.95em}
+        .form-field { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if messages %}<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+        <h1>Final Close Case: {{ case.case_no }}</h1>
+         <div class="case-info">
+            <dl>
+                <dt>Client:</dt><dd>{{ case.client.name }}</dd>
+                <dt>Current Status:</dt><dd>{{ case.get_status_display }}</dd>
+                <dt>Delivered On:</dt><dd>{{ case.delivery_date|date:"Y-m-d H:i"|default:"N/A" }}</dd>
+            </dl>
+            <p>Review case details. Add any final closing notes and confirm case closure.</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-field">
+                <label for="id_closing_notes">Final Closing Notes (e.g., follow-up actions, summary):</label>
+                <textarea name="closing_notes" id="id_closing_notes">{{ request.POST.closing_notes|default:case.closing_notes|default:"" }}</textarea>
+            </div>
+            <div class="actions">
+                {% if case.status == 'DELIVERED_PENDING_CLOSING' or case.status == 'QC_PASSED' %} {# Allow closing from these states #}
+                    <button type="submit" name="confirm_close" class="confirm-close">Confirm & Close Case</button>
+                {% else %}
+                    <p>This case is not currently awaiting final closure or has already been closed. Current status: {{ case.get_status_display }}</p>
+                {% endif %}
+            </div>
+        </form>
+        <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}" class="nav-link">Back to Case Details</a><br>
+        <a href="{% url 'service_manager:workplace_dashboard' %}" class="nav-link">Back to Workplace Dashboard</a>
+    </div>
+</body>
+</html>

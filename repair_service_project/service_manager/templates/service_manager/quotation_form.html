@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ form_title|default:"Manage Quotation" }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; margin-bottom: 20px; }
+        form p, .form-field { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="date"], input[type="number"], select, textarea {
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        textarea { min-height: 80px; }
+        .line-item-form { border: 1px solid #eee; padding: 15px; margin-bottom: 15px; border-radius: 4px; background-color: #fdfdfd;}
+        .line-item-form h3 { margin-top: 0; color: #444; font-size: 1.1em; }
+        .formset-container { margin-top: 20px; }
+        button[type="submit"] { padding: 10px 15px; background-color: #5cb85c; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .messages { list-style: none; padding: 0; margin-bottom: 20px; }
+        .messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 4px; }
+        .messages li.success { background-color: #d4edda; color: #155724; }
+        .messages li.error { background-color: #f8d7da; color: #721c24; }
+        .nav-link { display: inline-block; margin-top:20px; text-decoration: none; color: #007bff; font-size: 0.95em;}
+        .delete-marker { margin-left: 10px; }
+        .errorlist { color: #d9534f; list-style-type: none; padding-left: 0; font-size: 0.9em; margin-top: 0.25em;}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <h1>{{ form_title }}</h1>
+        <p>For Case: <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}">{{ case.case_no }}</a> (Client: {{ case.client.name }})</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <h2>Quotation Details</h2>
+            {{ form.as_p }} {# Main QuotationForm #}
+
+            <div class="formset-container">
+                <h2>Line Items</h2>
+                {{ formset.management_form }}
+                {% for line_item_form in formset %} {# Changed variable name for clarity #}
+                    <div class="line-item-form">
+                        <h3>Line Item #{{ forloop.counter }}</h3>
+                        {% if line_item_form.instance.pk and formset.can_delete %}
+                            <div style="float: right;">{{ line_item_form.DELETE.label_tag }} {{ line_item_form.DELETE }}</div>
+                        {% endif %}
+                        {{ line_item_form.id }} {# Important for formset to correctly identify existing forms #}
+                        {{ line_item_form.as_p }}
+                    </div>
+                {% endfor %}
+                {# Basic JS for adding more forms could be added here later #}
+            </div>
+
+            <button type="submit">Save Quotation</button>
+        </form>
+        <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}" class="nav-link">Back to Case Details</a>
+    </div>
+</body>
+</html>

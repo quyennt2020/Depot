@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Repair for Case: {{ case.case_no }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+        .container { max-width: 950px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: #0056b3; }
+        h2 { border-top: 1px solid #eee; padding-top:15px; margin-top:25px; }
+        h3 { font-size: 1.2em; color: #337ab7; margin-top: 20px; margin-bottom:10px;}
+        .case-details dt { font-weight: bold; color: #555; }
+        .case-details dd { margin-left: 0; margin-bottom: 5px; }
+        .item-section { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; background-color: #fcfcfc; }
+        .item-header { font-size: 1.1em; font-weight:bold; margin-bottom:10px; }
+        .line-item-form { border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-radius: 4px; background-color: #fdfdfd;}
+        .line-item-form p { margin-bottom:10px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], input[type="number"], select {
+            width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;
+        }
+        .formset-container { margin-top: 10px; }
+        .actions button, .item-actions button {
+            padding: 10px 15px; background-color: #007bff; color: white; border: none;
+            border-radius: 4px; cursor: pointer; margin-right:10px; margin-top:10px;
+        }
+        .actions button.start-repair { background-color: #5cb85c; }
+        .actions button.complete-repair { background-color: #f0ad4e; }
+        .actions button.save-parts { background-color: #5bc0de; }
+        .messages { list-style: none; padding: 0; margin-bottom: 20px; }
+        .messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 4px; }
+        .messages li.success { background-color: #d4edda; color: #155724; }
+        .messages li.error { background-color: #f8d7da; color: #721c24; }
+        .nav-link { display: inline-block; margin-top:20px; text-decoration: none; color: #007bff; font-size: 0.95em;}
+        .errorlist { color: #d9534f; list-style-type: none; padding-left: 0; font-size: 0.9em; margin-top: 0.25em;}
+    </style>
+</head>
+<body>
+    {% load custom_filters %} {# Load the custom template filter #}
+    <div class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <h1>Manage Repair: Case {{ case.case_no }}</h1>
+        <div class="case-details">
+            <dl>
+                <dt>Client:</dt><dd>{{ case.client.name }}</dd>
+                <dt>Status:</dt><dd>{{ case.get_status_display }}</dd>
+                <dt>Registered:</dt><dd>{{ case.registration_date|date:"Y-m-d H:i" }}</dd>
+                {% if case.quotation.total_amount %}
+                    <dt>Quoted Amount:</dt><dd>${{ case.quotation.total_amount|floatformat:2 }}</dd>
+                {% endif %}
+                {% if case.repair_start_date %}
+                    <dt>Repair Started:</dt><dd>{{ case.repair_start_date|date:"Y-m-d H:i" }}</dd>
+                {% endif %}
+            </dl>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="actions">
+                {% if case.status == 'QUOTATION_APPROVED' %}
+                    <button type="submit" name="action" value="start_repair" class="start-repair">Start Repair</button>
+                {% endif %}
+                {% if case.status == 'REPAIR_IN_PROGRESS' %}
+                    <button type="submit" name="action" value="mark_repair_complete" class="complete-repair">Mark Repair Complete & Save All Parts</button>
+                {% endif %}
+                {# Always show Save Parts button if there are items, regardless of repair status, unless case is past QC #}
+                {% if case.items.all and case.status != 'QC' and case.status != 'DELIVERY' and case.status != 'CLOSED' %}
+                    <button type="submit" name="action" value="save_parts" class="save-parts">Save Parts Usage Only</button>
+                {% endif %}
+            </div>
+
+            <h2>Equipment Items & Parts Used</h2>
+            {% for item in case.items.all %}
+                <div class="item-section">
+                    <div class="item-header">
+                        Item: {{ item.equipment_instance.serial_no }} ({{ item.equipment_instance.model.name }} - {{ item.equipment_instance.model.brand.name }}) <br>
+                        Malfunction: {{ item.malfunction_description }}
+                    </div>
+                    {% with current_formset=item_formsets|get_item:item.id %}
+                        {% if current_formset %}
+                            <h3>Spare Parts for {{ item.equipment_instance.serial_no|default_if_none:"this item" }}</h3>
+                            {{ current_formset.management_form }}
+                            {% for part_form in current_formset %}
+                                <div class="line-item-form">
+                                    {{ part_form.id }}
+                                    {% if part_form.instance.pk and current_formset.can_delete %}
+                                        <div style="float: right;">{{ part_form.DELETE.label_tag }} {{ part_form.DELETE }}</div>
+                                    {% endif %}
+                                    {{ part_form.as_p }}
+                                </div>
+                            {% endfor %}
+                            {% if current_formset.non_form_errors %}
+                                <div class="errorlist">{{ current_formset.non_form_errors }}</div>
+                            {% endif %}
+                             {% for err_dict in current_formset.errors %}
+                                {% for field, errors in err_dict.items %}
+                                    {% for error in errors %}
+                                     <div class="errorlist">Error in form {{ forloop.parentloop.counter0 }}: {{ field }} - {{ error }}</div>
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% else %}
+                            <p>No parts formset available for this item (ID: {{ item.id }}).</p>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            {% empty %}
+                <p>No equipment items registered for this case.</p>
+            {% endfor %}
+        </form>
+
+        <a href="{% url 'service_manager:repair_queue' %}" class="nav-link">Back to Repair Queue</a> <br>
+        <a href="{% url 'service_manager:workplace_dashboard' %}" class="nav-link">Back to Workplace Dashboard</a>
+    </div>
+</body>
+</html>

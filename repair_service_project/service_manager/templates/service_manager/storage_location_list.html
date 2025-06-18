@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Client List</title>
+    <title>Storage Location List</title>
     <style>
-        /* Basic styling - can be expanded or use a shared CSS file */
+        /* Basic styling - consistent with other list views like malfunction_type_list.html */
         body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; }
-        .container { max-width: 1000px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         h1 { color: #0056b3; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #f2f2f2; }
+        td.description { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .actions a { margin-right: 10px; text-decoration: none; }
         .add-link { display: inline-block; margin-bottom: 20px; padding: 10px 15px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; }
         .messages { list-style: none; padding: 0; margin-bottom: 20px; }
-        .messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 4px; }
-        .messages li.success { background-color: #d4edda; color: #155724; }
-        .messages li.error { background-color: #f8d7da; color: #721c24; }
+        .messages li.success { background-color: #d4edda; color: #155724; padding: 10px; border-radius: 4px; }
         .nav-link { display: inline-block; margin-top:20px; text-decoration: none; color: #007bff; font-size: 0.95em;}
     </style>
 </head>
@@ -29,40 +28,31 @@
         </ul>
         {% endif %}
 
-        <h1>Client List</h1>
-        {% if perms.service_manager.add_client %}
-        <a href="{% url 'service_manager:client_add' %}" class="add-link">Add New Client</a>
-        {% endif %}
-        {% if clients %}
+        <h1>Storage Location List</h1>
+        <a href="{% url 'service_manager:storage_location_add' %}" class="add-link">Add New Storage Location</a>
+        {% if storage_locations %}
             <table>
                 <thead>
                     <tr>
                         <th>Name</th>
-                        <th>Region</th>
-                        <th>Contact Person</th>
-                        <th>Phone</th>
+                        <th>Description</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for client in clients %}
+                    {% for loc in storage_locations %}
                     <tr>
-                        <td>{{ client.name }}</td>
-                        <td>{{ client.region.name|default:"N/A" }}</td>
-                        <td>{{ client.contact_person|default:"N/A" }}</td>
-                        <td>{{ client.phone|default:"N/A" }}</td>
+                        <td>{{ loc.name }}</td>
+                        <td class="description" title="{{ loc.description }}">{{ loc.description|truncatewords:15 }}</td>
                         <td class="actions">
-                            {% if perms.service_manager.change_client %}
-                            <a href="{% url 'service_manager:client_edit' client_id=client.id %}">Edit</a>
-                            {% endif %}
-                            {# Add delete functionality later if needed #}
+                            <a href="{% url 'service_manager:storage_location_edit' loc_id=loc.id %}">Edit</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         {% else %}
-            <p>No clients found. <a href="{% url 'service_manager:client_add' %}">Add one now?</a></p>
+            <p>No storage locations found. <a href="{% url 'service_manager:storage_location_add' %}">Add one now?</a></p>
         {% endif %}
         <a href="{% url 'service_manager:config_dashboard' %}" class="nav-link">Back to Configuration Dashboard</a>
     </div>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Delivery for Case: {{ case.case_no }}</title>
+    <style>/* Basic styling consistent with other management views */
+        body{font-family:sans-serif;margin:20px;background-color:#f9f9f9}
+        .container{max-width:900px;margin:auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 0 15px rgba(0,0,0,.1)}
+        h1,h2{color:#0056b3}h2{border-top:1px solid #eee;padding-top:15px;margin-top:25px}
+        .case-info dt{font-weight:700;color:#555}.case-info dd{margin-left:0;margin-bottom:8px}
+        textarea[name="delivery_notes"]{width:100%;min-height:100px;padding:8px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;margin-bottom:15px}
+        .actions button{padding:10px 15px;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-top:10px;font-size:1em}
+        .actions button.confirm-delivery{background-color:#28a745}
+        .messages{list-style:none;padding:0;margin-bottom:20px}.messages li{padding:10px 15px;margin-bottom:10px;border-radius:4px}
+        .messages li.success{background-color:#d4edda;color:#155724}.messages li.error{background-color:#f8d7da;color:#721c24}
+        .nav-link{display:inline-block;margin-top:20px;text-decoration:none;color:#007bff;font-size:.95em}
+        .form-field { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if messages %}<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+        <h1>Manage Delivery: Case {{ case.case_no }}</h1>
+        <div class="case-info">
+            <dl>
+                <dt>Client:</dt><dd>{{ case.client.name }}</dd>
+                <dt>Current Status:</dt><dd>{{ case.get_status_display }}</dd>
+                <dt>QC Passed Date:</dt><dd>{{ case.qc_date|date:"Y-m-d H:i"|default:"N/A" }}</dd>
+            </dl>
+            <p>Review case details above. Confirm delivery to client below.</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-field">
+                <label for="id_delivery_notes">Delivery Notes (e.g., recipient, time, condition):</label>
+                <textarea name="delivery_notes" id="id_delivery_notes">{{ request.POST.delivery_notes|default:case.delivery_notes|default:"" }}</textarea>
+            </div>
+            <div class="actions">
+                {% if case.status == 'QC_PASSED' %}
+                    <button type="submit" name="confirm_delivery" class="confirm-delivery">Confirm Delivery to Client</button>
+                {% else %}
+                    <p>This case is not currently awaiting delivery. Current status: {{ case.get_status_display }}</p>
+                {% endif %}
+            </div>
+        </form>
+        <a href="{% url 'service_manager:delivery_queue' %}" class="nav-link">Back to Delivery Queue</a><br>
+        <a href="{% url 'service_manager:case_detail' case_no=case.case_no %}" class="nav-link">View Case Details</a>
+    </div>
+</body>
+</html>

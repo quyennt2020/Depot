@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quotation Details: {{ quotation.quotation_no }}</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+        .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        h2 { border-top: 1px solid #eee; padding-top:15px; margin-top:25px; }
+        .detail-grid { display: grid; grid-template-columns: 200px 1fr; gap: 8px 15px; margin-bottom: 20px; font-size: 0.95em;}
+        .detail-grid dt { font-weight: bold; color: #555; }
+        .detail-grid dd { margin-left: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .total-row td { font-weight: bold; background-color: #f8f8f8; }
+        .actions { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+        .actions form { display: inline-block; margin-right: 10px; }
+        .actions button { padding: 8px 12px; text-decoration: none; border-radius: 5px; border: none; cursor: pointer; font-size: 0.9em; }
+        .approve-btn { background-color: #28a745; color: white; }
+        .reject-btn { background-color: #dc3545; color: white; }
+        .nav-link { display: inline-block; margin-right:10px; padding: 8px 12px; background-color: #6c757d; color: white; text-decoration:none; border-radius:5px; font-size:0.9em;}
+        .messages { list-style: none; padding: 0; margin-bottom: 20px; }
+        .messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 4px; }
+        .messages li.success { background-color: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <h1>Quotation: {{ quotation.quotation_no }}</h1>
+        <p>For Case: <a href="{% url 'service_manager:case_detail' case_no=quotation.case.case_no %}">{{ quotation.case.case_no }}</a> (Client: {{ quotation.case.client.name }})</p>
+
+        <dl class="detail-grid">
+            <dt>Status:</dt> <dd>{{ quotation.get_status_display }}</dd>
+            <dt>Created Date:</dt> <dd>{{ quotation.created_date|date:"Y-m-d H:i" }}</dd>
+            <dt>Expiry Date:</dt> <dd>{{ quotation.expiry_date|date:"Y-m-d"|default:"N/A" }}</dd>
+            <dt>Total Amount:</dt> <dd>${{ quotation.total_amount|floatformat:2 }}</dd> {# Assuming currency is USD #}
+            <dt>Notes:</dt> <dd>{{ quotation.notes|linebreaksbr|default:"N/A" }}</dd>
+        </dl>
+
+        <h2>Line Items</h2>
+        {% if quotation.lineitems.all %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Spare Part</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Total Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in quotation.lineitems.all %}
+                    <tr>
+                        <td>{{ item.description }}</td>
+                        <td>{{ item.spare_part.name|default:"N/A" }} {% if item.spare_part %}({{ item.spare_part.part_no|default:"" }}){% endif %}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>${{ item.unit_price|floatformat:2 }}</td>
+                        <td>${{ item.total_price|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="4" style="text-align:right;"><strong>Grand Total:</strong></td>
+                        <td><strong>${{ quotation.total_amount|floatformat:2 }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        {% else %}
+            <p>No line items for this quotation.</p>
+        {% endif %}
+
+        <div class="actions">
+            <a href="{% url 'service_manager:case_detail' case_no=quotation.case.case_no %}" class="nav-link">Back to Case</a>
+            {# Add edit link if needed and user has permission #}
+            {# {% if perms.service_manager.change_quotation %}
+                 <a href="URL_TO_EDIT_QUOTATION" class="nav-link" style="background-color:#ffc107; color:black;">Edit Quotation</a>
+            {% endif %} #}
+
+            {% if quotation.status == 'SUBMITTED' or quotation.status == 'DRAFT' %} {# Example: only allow approval if submitted/draft #}
+                <form method="POST" action="{% url 'service_manager:update_quotation_status' quotation_id=quotation.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="APPROVED">
+                    <button type="submit" class="approve-btn">Approve Quotation</button>
+                </form>
+                <form method="POST" action="{% url 'service_manager:update_quotation_status' quotation_id=quotation.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="REJECTED">
+                    <button type="submit" class="reject-btn">Reject Quotation</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

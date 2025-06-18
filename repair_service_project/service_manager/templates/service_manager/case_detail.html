@@ -3,7 +3,6 @@
 <head>
     <title>Case Details: {{ case.case_no }}</title>
     <style>
-        /* ... (retain existing styles from previous step) ... */
         body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
         .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         h1 { color: #0056b3; border-bottom: 2px solid #eee; padding-bottom: 10px; }
@@ -15,19 +14,28 @@
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background-color: #f2f2f2; }
         .actions { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
-        .actions a, .actions button {
+        .actions a, .actions button, .action-btn { /* Added .action-btn */
             padding: 10px 15px; text-decoration: none; border-radius: 5px; margin-right: 10px;
             font-size: 0.95em; display: inline-block; border: none; cursor: pointer;
+            color: white; /* Default color for .action-btn if not overridden */
         }
-        .back-link { color: #fff; background-color: #6c757d; }
+        .back-link { background-color: #6c757d; }
         .back-link:hover { background-color: #5a6268; }
-        .confirm-receive-btn { color: #fff; background-color: #28a745; }
+        .confirm-receive-btn { background-color: #28a745; }
         .confirm-receive-btn:hover { background-color: #218838; }
+        .create-quote-btn { background-color: #007bff; } /* Blue for create */
+        .create-quote-btn:hover { background-color: #0056b3; }
+        .view-quote-btn { background-color: #17a2b8; } /* Teal for view */
+        .view-quote-btn:hover { background-color: #117a8b; }
+        .manage-delivery-btn { background-color: #ffc107; color: black; } /* Yellow for delivery */
+        .manage-delivery-btn:hover { background-color: #e0a800; }
+        .close-case-btn { background-color: #6f42c1; } /* Indigo for close */
+        .close-case-btn:hover { background-color: #5a2a99; }
         .messages { list-style: none; padding: 0; margin-bottom: 20px; }
         .messages li { padding: 10px 15px; margin-bottom: 10px; border-radius: 4px; }
         .messages li.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .messages li.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .messages li.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; } /* Added for info messages */
+        .messages li.info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
     </style>
 </head>
 <body>
@@ -48,6 +56,10 @@
             {% if case.received_date %}
             <dt>Received Date:</dt>
             <dd>{{ case.received_date|date:"Y-m-d H:i" }}</dd>
+            {% endif %}
+            {% if case.quotation_date %}
+            <dt>Quotation Submitted Date:</dt>
+            <dd>{{ case.quotation_date|date:"Y-m-d H:i" }}</dd>
             {% endif %}
             <dt>Client:</dt>
             <dd>{{ case.client.name|default:"N/A" }}</dd>
@@ -91,11 +103,27 @@
 
         <div class="actions">
             <a href="{% url 'service_manager:workplace_dashboard' %}" class="back-link">Back to Dashboard</a>
-            {% if case.status == 'NEW' %}
+
+            {% if case.status == 'NEW' %} {# Assuming NEW is from models.CaseStatus.NEW #}
             <form method="POST" action="{% url 'service_manager:case_confirm_receiving' case_no=case.case_no %}" style="display: inline;">
                 {% csrf_token %}
-                <button type="submit" class="confirm-receive-btn">Confirm Physical Receipt of Equipment</button>
+                <button type="submit" class="confirm-receive-btn">Confirm Physical Receipt</button>
             </form>
+            {% endif %}
+
+            {% if case.status == 'AWAITING_QUOTATION' %} {# Assuming AWAITING_QUOTATION from models.CaseStatus #}
+                <a href="{% url 'service_manager:create_quotation_for_case' case_no=case.case_no %}" class="action-btn create-quote-btn">Create Quotation</a>
+            {% endif %}
+
+            {% if case.quotation %}
+                <a href="{% url 'service_manager:view_quotation' quotation_id=case.quotation.id %}" class="action-btn view-quote-btn">View Quotation ({{ case.quotation.quotation_no }}) - {{ case.quotation.get_status_display }}</a>
+            {% endif %}
+
+            {% if case.status == 'QC_PASSED' %}
+                <a href="{% url 'service_manager:manage_case_delivery' case_no=case.case_no %}" class="action-btn manage-delivery-btn">Manage Delivery</a>
+            {% endif %}
+            {% if case.status == 'DELIVERED_PENDING_CLOSING' or case.status == 'QC_PASSED' %} {# Or other suitable statuses for closing #}
+                <a href="{% url 'service_manager:final_close_case' case_no=case.case_no %}" class="action-btn close-case-btn">Final Close Case</a>
             {% endif %}
         </div>
     </div>
